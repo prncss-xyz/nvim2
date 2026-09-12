@@ -152,6 +152,35 @@ T["pseudo terminal"]["focuses the latest artifact for the current project"] = fu
 	assert.same(result.expected, result.actual)
 end
 
+T["pseudo terminal"]["inserts text at the artifact cursor"] = function()
+	child.lua([[root = vim.fn.tempname()
+		local projects = vim.fs.joinpath(root, "projects")
+		local artifacts = vim.fs.joinpath(root, "artifacts")
+		local project = vim.fs.joinpath(projects, "alpha", "main")
+		local artifact = vim.fs.joinpath(artifacts, "alpha", "notes.md")
+		vim.fn.mkdir(project, "p")
+		vim.fn.mkdir(vim.fs.dirname(artifact), "p")
+		vim.fn.writefile({ "before after" }, artifact)
+
+		package.loaded["my.parameters"] = { dirs = { projects = projects, artifacts = artifacts } }
+		package.loaded["plugins.toggleterm.terms.create_term"] = { new = function() end }
+		package.loaded["plugins.toggleterm.config"] = { autostart = {}, on_status = function() end }
+		package.loaded["plugins.toggleterm.terms.get_commands"] = {
+			get_commands = function() error("artifact must not query terminal commands") end,
+		}
+		package.path = vim.fn.getcwd() .. "/lua/?.lua;" .. vim.fn.getcwd() .. "/lua/?/init.lua;" .. package.path
+
+		vim.o.hidden = true
+		vim.cmd.cd(vim.fn.fnameescape(project))
+		vim.cmd.edit(vim.fn.fnameescape(artifact))
+		vim.api.nvim_win_set_cursor(0, { 1, 7 })
+		require("plugins.toggleterm.terms").put({ key = "artifact" }, "inserted ")
+		result = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+	]])
+
+	assert.same({ "before inserted after" }, child.lua_get("result"))
+end
+
 T["pseudo terminal"]["participates in history only when explicitly included"] = function()
 	child.lua([[local sent = {}
 		local created = {}

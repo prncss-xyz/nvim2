@@ -46,6 +46,33 @@ T["selected prompts run outside the selector callback"] = function()
 	]])
 end
 
+T["artifact prompts use the project of the current artifact"] = function()
+	child.lua([[local artifact
+
+		package.path = vim.fn.getcwd() .. "/lua/?.lua;" .. vim.fn.getcwd() .. "/lua/?/init.lua;" .. package.path
+		package.loaded["plugins.toggleterm.terms.artifact_cwd"] = {
+			resolve = function(path)
+				assert(path == "/artifacts/neomux/topic/index.md")
+				return "/projects/neomux/main"
+			end,
+		}
+		package.loaded["plugins.toggleterm.harness"] = {
+			create_artifact = function(input, filename, root)
+				artifact = { input, filename, root }
+			end,
+		}
+		vim.api.nvim_buf_set_name(0, "/artifacts/neomux/topic/index.md")
+
+		local prompt = require("plugins.toggleterm.prompt_utils").create_artifact("idea.md")
+		prompt(function(_, callback)
+			callback("captured idea")
+		end, "idea")
+		result = artifact
+	]])
+
+	assert.same({ "captured idea", "idea.md", "/projects/neomux/main" }, child.lua_get("result"))
+end
+
 T["artifact prompts can remove their source selection"] = function()
 	child.lua([[local deleted = false
 		local artifact

@@ -94,7 +94,15 @@ function M.create(touch)
 			return
 		end
 		vim.fn.bufload(target.bufnr)
-		local row, col = unpack(vim.api.nvim_buf_get_mark(target.bufnr, '"'))
+		local target_windows = vim.fn.win_findbuf(target.bufnr)
+		local current_window = vim.api.nvim_get_current_win()
+		local target_window = vim.api.nvim_win_get_buf(current_window) == target.bufnr and current_window or target_windows[1]
+		local row, col
+		if target_window then
+			row, col = unpack(vim.api.nvim_win_get_cursor(target_window))
+		else
+			row, col = unpack(vim.api.nvim_buf_get_mark(target.bufnr, '"'))
+		end
 		row = math.max(row, 1)
 		local line = vim.api.nvim_buf_get_lines(target.bufnr, row - 1, row, false)[1] or ""
 		col = math.min(col, #line)

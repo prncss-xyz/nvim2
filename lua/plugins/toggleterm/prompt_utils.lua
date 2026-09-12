@@ -10,7 +10,10 @@ end
 
 function M.create_artifact(filename, remove)
 	return function(input, prompt)
-		local root = vim.fs.root(0, ".git") or vim.uv.cwd()
+		local artifact_cwd = require("plugins.toggleterm.terms.artifact_cwd")
+		local root = artifact_cwd.resolve(vim.api.nvim_buf_get_name(0))
+			or vim.fs.root(0, ".git")
+			or vim.uv.cwd()
 		input(prompt, function(contents, using_selection)
 			if remove and using_selection then
 				vim.cmd.normal({ 'gv"_d', bang = true })
