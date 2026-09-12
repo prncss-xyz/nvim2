@@ -52,6 +52,20 @@ local function find_free_branch(branch, seen)
 	return branch
 end
 
+local function find_free_file(dir, name)
+	local path = vim.fs.joinpath(dir, name .. ".md")
+	if not vim.uv.fs_stat(path) then
+		return path
+	end
+	for n = 0, 999 do
+		path = vim.fs.joinpath(dir, string.format("%s-%03d.md", name, n))
+		if not vim.uv.fs_stat(path) then
+			return path
+		end
+	end
+	return path
+end
+
 local function branch_name(input, callback, root)
 	root = root or vim.fs.root(0, ".git") or vim.uv.cwd()
 	vim.notify("Naming branch...", vim.log.levels.INFO)
@@ -73,6 +87,16 @@ function M.create_artifact(input, filename, root)
 		local artifact_root = artifact_cwd.for_project(project_root)
 		local path = vim.fs.joinpath(artifact_root, branch, filename)
 		vim.fn.mkdir(vim.fs.dirname(path), "p")
+		vim.fn.writefile(vim.split(input, "\n", { plain = true }), path)
+		vim.cmd.edit(vim.fn.fnameescape(path))
+	end, root)
+end
+
+function M.create_task(input, artifact)
+	local dir = vim.fs.dirname(artifact)
+	local root = assert(artifact_cwd.resolve(artifact), "Current buffer is not inside an artifact")
+	branch_name(input, function(name)
+		local path = find_free_file(dir, name)
 		vim.fn.writefile(vim.split(input, "\n", { plain = true }), path)
 		vim.cmd.edit(vim.fn.fnameescape(path))
 	end, root)

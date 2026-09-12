@@ -12,17 +12,9 @@ local create_pseudo_terminal = require("plugins.toggleterm.terms.pseudo_terminal
 local visit = require("my.browser").visit
 
 local screen_manifests = {
-	pi = {
+	p = {
 		default_status = "idle",
 		rules = {
-			{
-				id = "status_bar_running",
-				status = "working",
-				priority = 200,
-				region = "bottom_non_empty_lines(3)",
-				visible_working = true,
-				line_suffix = { "· running" },
-			},
 			{
 				id = "working_literal",
 				status = "working",

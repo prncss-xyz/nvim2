@@ -118,4 +118,51 @@ T["artifact prompts keep typed input when removal is enabled"] = function()
 	assert(not child.lua_get("result"))
 end
 
+T["task prompts create a task inside the current artifact"] = function()
+	child.lua([[local created
+
+		package.path = vim.fn.getcwd() .. "/lua/?.lua;" .. vim.fn.getcwd() .. "/lua/?/init.lua;" .. package.path
+		package.loaded["plugins.toggleterm.terms.artifact_cwd"] = {
+			contains = function(path) return path == "/artifacts/neomux/topic/index.md" end,
+			resolve = function() return "/projects/neomux/main" end,
+		}
+		package.loaded["plugins.toggleterm.harness"] = {
+			create_task = function(input, artifact)
+				created = { input, artifact }
+			end,
+		}
+		vim.api.nvim_buf_set_name(0, "/artifacts/neomux/topic/index.md")
+
+		local prompt = require("plugins.toggleterm.prompt_utils").create_task()
+		prompt(function(_, callback) callback("new task") end, "task")
+		result = created
+	]])
+
+	assert.same({ "new task", "/artifacts/neomux/topic/index.md" }, child.lua_get("result"))
+end
+
+T["task prompts create a new artifact outside artifacts"] = function()
+	child.lua([[local created
+
+		package.path = vim.fn.getcwd() .. "/lua/?.lua;" .. vim.fn.getcwd() .. "/lua/?/init.lua;" .. package.path
+		package.loaded["plugins.toggleterm.terms.artifact_cwd"] = {
+			contains = function() return false end,
+			resolve = function() return nil end,
+		}
+		package.loaded["plugins.toggleterm.harness"] = {
+			create_artifact = function(input, filename, root)
+				created = { input, filename, root }
+			end,
+		}
+
+		local prompt = require("plugins.toggleterm.prompt_utils").create_task()
+		prompt(function(_, callback) callback("new artifact") end, "task")
+		result = created
+	]])
+
+	local result = child.lua_get("result")
+	assert.same("new artifact", result[1])
+	assert.same("index.md", result[2])
+end
+
 return T
