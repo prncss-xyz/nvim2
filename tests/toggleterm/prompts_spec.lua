@@ -46,4 +46,49 @@ T["selected prompts run outside the selector callback"] = function()
 	]])
 end
 
+T["artifact prompts can remove their source selection"] = function()
+	child.lua([[local deleted = false
+		local artifact
+
+		package.path = vim.fn.getcwd() .. "/lua/?.lua;" .. vim.fn.getcwd() .. "/lua/?/init.lua;" .. package.path
+		package.loaded["plugins.toggleterm.harness"] = {
+			create_artifact = function(input, filename, root)
+				artifact = { input, filename, root }
+			end,
+		}
+		vim.cmd.normal = function(command)
+			assert(vim.deep_equal(command, { 'gv"_d', bang = true }))
+			deleted = true
+		end
+
+		local prompt = require("plugins.toggleterm.prompt_utils").create_artifact("idea.md", true)
+		prompt(function(_, callback)
+			callback("selected text", true)
+		end, "idea")
+		result = { deleted = deleted, artifact = artifact }
+	]])
+
+	local result = child.lua_get("result")
+	assert(result.deleted)
+	assert.same("selected text", result.artifact[1])
+	assert.same("idea.md", result.artifact[2])
+end
+
+T["artifact prompts keep typed input when removal is enabled"] = function()
+	child.lua([[local deleted = false
+
+		package.path = vim.fn.getcwd() .. "/lua/?.lua;" .. vim.fn.getcwd() .. "/lua/?/init.lua;" .. package.path
+		package.loaded["plugins.toggleterm.harness"] = { create_artifact = function() end }
+		vim.cmd.normal = function() deleted = true end
+
+		local prompt = require("plugins.toggleterm.prompt_utils").create_artifact("idea.md", true)
+		prompt(function(_, callback)
+			callback("typed text")
+		end, "idea")
+		result = deleted
+	]])
+
+	assert(not child.lua_get("result"))
+end
+
 return T

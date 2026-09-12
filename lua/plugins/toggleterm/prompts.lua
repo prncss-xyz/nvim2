@@ -13,7 +13,7 @@ local function input_for_current_mode()
 
 	return function(prompt, continuation)
 		if selection then
-			continuation(selection)
+			continuation(selection, true)
 			return
 		end
 		vim.ui.input({ prompt = prompt }, function(input)

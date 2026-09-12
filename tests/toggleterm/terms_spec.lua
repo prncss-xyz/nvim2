@@ -131,7 +131,6 @@ T["pseudo terminal"]["focuses the latest artifact for the current project"] = fu
 		vim.fn.mkdir(vim.fs.dirname(artifact), "p")
 		vim.fn.writefile({ "source" }, source)
 		vim.fn.writefile({ "artifact" }, artifact)
-		vim.uv.fs_symlink(artifacts .. "/alpha", project .. "/.artifacts")
 
 		package.loaded["my.parameters"] = { dirs = { projects = projects, artifacts = artifacts } }
 		package.loaded["plugins.toggleterm.terms.create_term"] = { new = function() end }
@@ -266,7 +265,6 @@ T["put"]["formats the current project buffer for the latest artifact"] = functio
 		vim.fn.mkdir(vim.fs.dirname(artifact), "p")
 		vim.fn.writefile({ "source" }, source)
 		vim.fn.writefile({ "artifact" }, artifact)
-		vim.uv.fs_symlink(artifacts .. "/alpha", project .. "/.artifacts")
 
 		package.loaded["my.parameters"] = { dirs = { projects = projects, artifacts = artifacts } }
 		package.loaded["plugins.toggleterm.terms.create_term"] = { new = function() end }
@@ -303,7 +301,6 @@ T["put"]["uses the last project buffer from a terminal"] = function()
 		vim.fn.mkdir(vim.fs.dirname(artifact), "p")
 		vim.fn.writefile({ "source" }, source)
 		vim.fn.writefile({ "artifact" }, artifact)
-		vim.uv.fs_symlink(artifacts .. "/alpha", project .. "/.artifacts")
 
 		package.loaded["my.parameters"] = { dirs = { projects = projects, artifacts = artifacts } }
 		package.loaded["toggleterm.terminal"] = {
@@ -438,6 +435,21 @@ T["artifact cwd"]["resolves explicit and default branches without git"] = functi
 		default_nested = vim.fs.joinpath(root, "projects", "alpha", "main"),
 		default_flat = vim.fs.joinpath(root, "projects", "beta"),
 	}, child.lua_get("result"))
+end
+
+T["artifact cwd"]["maps a checkout to its project artifacts"] = function()
+	child.lua([[root = vim.fn.tempname()
+		local projects = vim.fs.joinpath(root, "projects")
+		local artifacts = vim.fs.joinpath(root, "artifacts")
+		local checkout = vim.fs.joinpath(projects, "alpha", "main")
+
+		package.loaded["my.parameters"] = { dirs = { projects = projects, artifacts = artifacts } }
+		package.path = vim.fn.getcwd() .. "/lua/?.lua;" .. vim.fn.getcwd() .. "/lua/?/init.lua;" .. package.path
+		result = require("plugins.toggleterm.terms.artifact_cwd").for_project(checkout)
+	]])
+
+	local root = child.lua_get("root")
+	assert.same(vim.fs.joinpath(root, "artifacts", "alpha"), child.lua_get("result"))
 end
 
 T["artifact cwd"]["maps feature checkouts to branch artifact paths"] = function()

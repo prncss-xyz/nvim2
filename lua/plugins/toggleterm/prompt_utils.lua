@@ -8,10 +8,13 @@ function M.with_prompt(cb)
 	end
 end
 
-function M.create_artifact(filename)
+function M.create_artifact(filename, remove)
 	return function(input, prompt)
 		local root = vim.fs.root(0, ".git") or vim.uv.cwd()
-		input(prompt, function(contents)
+		input(prompt, function(contents, using_selection)
+			if remove and using_selection then
+				vim.cmd.normal({ 'gv"_d', bang = true })
+			end
 			require("plugins.toggleterm.harness").create_artifact(contents, filename, root)
 		end)
 	end

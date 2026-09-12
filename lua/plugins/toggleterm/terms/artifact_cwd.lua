@@ -117,17 +117,10 @@ function M.for_checkout(project_dir)
 end
 
 ---@param project_dir string
----@return string|nil
-function M.project_artifacts(project_dir)
-	local matches = vim.fs.find(".artifacts", { path = project_dir, upward = true, limit = 1 })
-	local path = matches[1]
-	if path == nil then
-		return nil
-	end
-	path = vim.uv.fs_realpath(path)
-	if path and M.contains(path) then
-		return path
-	end
+---@return string
+function M.for_project(project_dir)
+	local project = project_name(project_dir)
+	return vim.fs.joinpath(dirs.artifacts, project)
 end
 
 ---@param path string
@@ -137,7 +130,7 @@ function M.project_file(path)
 	if project_dir == nil then
 		return nil
 	end
-	return require("my.project_file").find(project_dir, { vim.fs.joinpath(project_dir, ".artifacts") })
+	return require("my.project_file").find(project_dir)
 end
 
 return M

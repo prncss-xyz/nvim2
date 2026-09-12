@@ -9,6 +9,7 @@ function M.get_commands(filter, cwd)
 	templates.add_commands(commands, config.templates or {}, {
 		agents = config.agents,
 		dir = cwd,
+		file = vim.api.nvim_buf_get_name(0),
 		filetype = vim.bo.filetype,
 		tasks = config.tasks,
 	})

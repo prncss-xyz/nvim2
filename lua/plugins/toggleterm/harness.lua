@@ -70,7 +70,7 @@ end
 
 function M.create_artifact(input, filename, root)
 	branch_name(input, function(branch, project_root)
-		local artifact_root = assert(artifact_cwd.project_artifacts(project_root), "Project artifacts directory not found")
+		local artifact_root = artifact_cwd.for_project(project_root)
 		local path = vim.fs.joinpath(artifact_root, branch, filename)
 		vim.fn.mkdir(vim.fs.dirname(path), "p")
 		vim.fn.writefile(vim.split(input, "\n", { plain = true }), path)
@@ -109,7 +109,7 @@ local prompts = {
 
 local function with_worktree(path)
 	local project_dir = artifact_cwd.resolve(path)
-	local artifact_root = project_dir and artifact_cwd.project_artifacts(project_dir) or nil
+	local artifact_root = project_dir and artifact_cwd.for_project(project_dir) or nil
 	local relative_path = artifact_root and vim.fs.relpath(artifact_root, path) or nil
 	if not relative_path then
 		vim.notify("Current buffer is not inside the project's artifacts", vim.log.levels.ERROR)
